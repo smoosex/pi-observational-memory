@@ -42,6 +42,7 @@ The extension loads config once for its runtime. After changing settings, restar
       "thinking": "low"
     },
     "showWorkerNotifications": true,
+    "showCompactionNotifications": true,
     "passive": false,
     "debugLog": false
   }
@@ -65,6 +66,7 @@ You can omit everything. Defaults work for ordinary sessions, and if `model` is 
 | `model.provider` | string | unset | Provider name in Pi's model registry. Required when `model` is set. |
 | `model.id` | string | unset | Model id in Pi's model registry. Required when `model` is set. |
 | `model.thinking` | enum | unset; workers fall back to `low` | Optional reasoning/thinking level for memory workers. |
+| `showCompactionNotifications` | boolean | `true` | Shows routine automatic compaction notifications; warnings and errors are unaffected. |
 | `showWorkerNotifications` | boolean | `true` | Shows routine observer, reflector, and dropper progress notifications. |
 | `passive` | boolean | `false` | Disables proactive background memory and auto-compaction triggers. |
 | `debugLog` | boolean | `false` | Writes best-effort per-session extension debug events to Pi's agent directory. |
@@ -158,6 +160,12 @@ Set `model` when you want the observer, reflector, and dropper to use a cheaper 
 ```
 
 `provider` and `id` must both be non-empty strings. `thinking` is optional. If the configured model cannot be resolved, the runtime attempts to fall back to the current session model and notifies once. Memory workers accept either an API key or OAuth-style auth headers (e.g. `Authorization: Bearer …`), so OAuth-authenticated providers work without an API key. If no usable model or credentials are available, the relevant background worker skips/fails safely rather than inventing memory.
+
+## `showCompactionNotifications`
+
+Default: `true`.
+
+Set to `false` to hide automatic compaction start, success, deferred, and skipped notifications. Automatic compaction still runs normally. Warnings (including duplicate compaction cancellation) and errors remain visible. This setting is independent of `showWorkerNotifications` and does not affect explicit command output or Pi's own UI messages.
 
 ## `showWorkerNotifications`
 

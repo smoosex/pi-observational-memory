@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerCompactionTrigger } from "../src/hooks/compaction-trigger.js";
 import { compactionEntry, rawMessage, textCustomMessage, type TestEntry } from "./fixtures/session.js";
 
-function captureHandler(args: { compactAfterTokens?: number; compactAfterTokensMode?: "calibrated" | "ratio"; compactAfterTokensRatio?: number; passive?: boolean; compactInFlight?: boolean } = {}) {
+function captureHandler(args: { compactAfterTokens?: number; compactAfterTokensMode?: "calibrated" | "ratio"; compactAfterTokensRatio?: number; passive?: boolean; showCompactionNotifications?: boolean; compactInFlight?: boolean } = {}) {
 	let handler: ((event: unknown, ctx: unknown) => void) | undefined;
 	const pi = {
 		on: vi.fn((name: string, cb: typeof handler) => {
@@ -18,6 +18,7 @@ function captureHandler(args: { compactAfterTokens?: number; compactAfterTokensM
 			compactAfterTokensMode: args.compactAfterTokensMode ?? "calibrated",
 			compactAfterTokensRatio: args.compactAfterTokensRatio ?? 0.68,
 			passive: args.passive ?? false,
+			showCompactionNotifications: args.showCompactionNotifications ?? true,
 		},
 		compactInFlight: args.compactInFlight ?? false,
 		observerPromise: new Promise(() => {}),
@@ -83,6 +84,42 @@ describe("V3 compaction trigger", () => {
 			"Observational memory: compaction threshold reached (~3 estimated source tokens); triggering compaction",
 			"info",
 		);
+	});
+
+	it.each([true, false])("controls start and success notifications: %s", async (enabled) => {
+		const { handler, runtime } = captureHandler({ showCompactionNotifications: enabled });
+		const ctx = fakeCtx([dueBranch]);
+		handler(agentSettled(), ctx);
+		await vi.runAllTimersAsync();
+		expect(ctx.compact).toHaveBeenCalledTimes(1);
+		ctx.compact.mock.calls[0][0].onComplete();
+		expect(runtime.compactInFlight).toBe(false);
+		expect(ctx.ui.notify).toHaveBeenCalledTimes(enabled ? 2 : 0);
+		if (enabled) expect(ctx.ui.notify).toHaveBeenLastCalledWith("Observational memory: compaction complete", "info");
+	});
+
+	it.each(["busy", "below"])("silences routine skip notifications: %s", async (reason) => {
+		const { handler, runtime } = captureHandler({ showCompactionNotifications: false });
+		const ctx = fakeCtx([dueBranch, belowBranch], { isIdle: vi.fn(() => reason !== "busy") });
+		handler(agentSettled(), ctx);
+		await vi.runAllTimersAsync();
+		expect(ctx.compact).not.toHaveBeenCalled();
+		expect(ctx.ui.notify).not.toHaveBeenCalled();
+		expect(runtime.compactInFlight).toBe(false);
+	});
+
+	it.each(["callback", "throw"])("keeps errors visible with notifications disabled: %s", async (mode) => {
+		const { handler, runtime } = captureHandler({ showCompactionNotifications: false });
+		const ctx = fakeCtx([dueBranch]);
+		if (mode === "throw") ctx.compact.mockImplementation(() => { throw new Error("failed"); });
+		handler(agentSettled(), ctx);
+		await vi.runAllTimersAsync();
+		if (mode === "callback") ctx.compact.mock.calls[0][0].onError(new Error("failed"));
+		expect(ctx.ui.notify).toHaveBeenCalledExactlyOnceWith(
+			mode === "throw" ? "Observational memory: compact threw: failed" : "Observational memory: failed",
+			"error",
+		);
+		expect(runtime.compactInFlight).toBe(false);
 	});
 
 	it("skips passive mode", async () => {

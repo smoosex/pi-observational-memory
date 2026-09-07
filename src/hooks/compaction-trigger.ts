@@ -22,8 +22,9 @@ export function registerCompactionTrigger(pi: ExtensionAPI, runtime: Runtime): v
 		// may outlive the extension ctx (stale after session replacement/reload).
 		const hasUI = ctx.hasUI;
 		const ui = ctx.ui;
+		const showNotifications = hasUI && runtime.config.showCompactionNotifications;
 
-		if (hasUI) ui?.notify(
+		if (showNotifications) ui?.notify(
 			`Observational memory: compaction threshold reached (~${progress.toLocaleString()} estimated source tokens); triggering compaction`,
 			"info",
 		);
@@ -33,7 +34,7 @@ export function registerCompactionTrigger(pi: ExtensionAPI, runtime: Runtime): v
 			try {
 				if (!ctx.isIdle()) {
 					runtime.compactInFlight = false;
-					if (hasUI) ui?.notify(
+					if (showNotifications) ui?.notify(
 						"Observational memory: compaction deferred — agent became busy before compaction",
 						"info",
 					);
@@ -47,7 +48,7 @@ export function registerCompactionTrigger(pi: ExtensionAPI, runtime: Runtime): v
 				const currentProgress = rawTokensSinceLastCompaction(currentEntries);
 				if (currentProgress < threshold) {
 					runtime.compactInFlight = false;
-					if (hasUI) ui?.notify(
+					if (showNotifications) ui?.notify(
 						"Observational memory: compaction skipped — another compaction already ran before deferred compaction",
 						"info",
 					);
@@ -56,7 +57,7 @@ export function registerCompactionTrigger(pi: ExtensionAPI, runtime: Runtime): v
 				ctx.compact({
 					onComplete: () => {
 						runtime.compactInFlight = false;
-						if (hasUI) ui?.notify("Observational memory: compaction complete", "info");
+						if (showNotifications) ui?.notify("Observational memory: compaction complete", "info");
 					},
 					onError: (error: { message: string }) => {
 						runtime.compactInFlight = false;

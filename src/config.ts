@@ -47,6 +47,7 @@ export interface Config {
 	agentMaxTurns: number;
 	model?: ConfiguredModel;
 	showWorkerNotifications: boolean;
+	showCompactionNotifications: boolean;
 	passive: boolean;
 	debugLog: boolean;
 }
@@ -61,6 +62,7 @@ export const DEFAULTS: Config = {
 	observationsPoolTargetTokens: 10_000,
 	agentMaxTurns: 16,
 	showWorkerNotifications: true,
+	showCompactionNotifications: true,
 	passive: false,
 	debugLog: false,
 };
@@ -200,6 +202,7 @@ function normalizeSettingsConfig(value: Record<string, unknown>): Partial<Config
 	const ratio = validRatioOrUndefined(value.compactAfterTokensRatio);
 	if (ratio !== undefined) normalized.compactAfterTokensRatio = ratio;
 	if (typeof value.showWorkerNotifications === "boolean") normalized.showWorkerNotifications = value.showWorkerNotifications;
+	if (typeof value.showCompactionNotifications === "boolean") normalized.showCompactionNotifications = value.showCompactionNotifications;
 	if (typeof value.passive === "boolean") normalized.passive = value.passive;
 	if (typeof value.debugLog === "boolean") normalized.debugLog = value.debugLog;
 	const model = normalizeModel(value.model);

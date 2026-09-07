@@ -221,6 +221,7 @@ A typical config:
       "thinking": "low"
     },
     "showWorkerNotifications": true,
+    "showCompactionNotifications": true,
     "passive": false,
     "debugLog": false
   }
@@ -283,6 +284,7 @@ on the `Next compaction` line regardless of mode.
 | `observationsPoolTargetTokens` | half of max | Active observation target used by post-reflection dropper maintenance.                            |
 | `agentMaxTurns`             | `16`          | Shared turn cap for background memory-agent loops.                                                |
 | `model`                     | session model | Optional memory-worker model override: `{ provider, id, thinking }`.                              |
+| `showCompactionNotifications` | `true` | Shows routine automatic compaction notifications. Warnings and errors are unaffected. |
 | `showWorkerNotifications`   | `true`        | Shows routine observer, reflector, and dropper progress notifications. Warnings and errors are unaffected. |
 | `passive`                   | `false`       | Disables proactive background observation, reflection, maintenance, and auto-compaction triggers. |
 | `debugLog`                  | `false`       | Writes opt-in per-session extension debug events to Pi's agent directory.                         |
@@ -298,6 +300,8 @@ Valid `model.thinking` values are:
 * `max`
 
 If no `model` is configured, memory workers use the session model.
+
+Set `showCompactionNotifications` to `false` to hide automatic compaction start, success, deferred, and skipped notifications. Compaction still runs; warnings and errors remain visible. This setting defaults to `true` and is independent of `showWorkerNotifications`.
 
 Set `showWorkerNotifications` to `false` to hide routine worker start and completion messages (including deliberate-empty observer info messages). Model fallback/unavailability, worker failures (including observer stream errors), compaction notifications, and explicit `/om:*` command output remain visible.
 
