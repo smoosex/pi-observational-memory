@@ -299,7 +299,7 @@ Valid `model.thinking` values are:
 * `xhigh`
 * `max`
 
-If no `model` is configured, memory workers use the session model.
+If no `model` is configured, memory workers use the session model, including custom `pi.registerProvider` APIs such as `cursor-sdk`. You do not need a second built-in provider (OpenAI, OpenRouter, …) for observational memory to run. Set `model` only when you want cheaper or faster workers than the coding agent.
 
 Set `showCompactionNotifications` to `false` to hide automatic compaction start, success, deferred, and skipped notifications. Compaction still runs; warnings and errors remain visible. This setting defaults to `true` and is independent of `showWorkerNotifications`.
 
